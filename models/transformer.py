@@ -29,14 +29,17 @@ class Transformer(nn.Module):
 
         self.combine_embeddings_and_properties_layer = nn.Linear(embedding_size + number_of_properties, model_dimension)
         self.positional_encoding_layer = PositionalEncoding(model_dimension, dropout_probability=dropout_probability)
-        self.transformer = nn.Transformer(d_model=model_dimension,
-                                          dim_feedforward=feed_forward_transformer_layer_dimension,
-                                          dropout=dropout_probability)
+        self.transformer = nn.Transformer(
+            d_model=model_dimension,
+            dim_feedforward=feed_forward_transformer_layer_dimension,
+            dropout=dropout_probability
+        )
         self.transformer_to_vocabulary_logits_layer = nn.Linear(model_dimension, vocabulary_size)
 
-        self.register_buffer('decoder_attention_mask',
-                             torch.full((target_sequence_length, target_sequence_length), float("-inf")).triu(
-                                 diagonal=1))
+        self.register_buffer(
+            'decoder_attention_mask',
+            torch.full((target_sequence_length, target_sequence_length), float("-inf")).triu(diagonal=1)
+        )
 
     def forward(self, batched_source_numericalized, batched_source_properties, batched_target_input_numericalized,
                 batched_source_padding_mask, batched_target_input_padding_mask):
@@ -74,7 +77,7 @@ class Transformer(nn.Module):
         vocabulary_logits = self.transformer_to_vocabulary_logits_layer(transformer_output)
         # vocabulary_logits -> batch_size x target_sequence_length x vocabulary_size
 
-        #vocabulary_log_probability = F.log_softmax(vocabulary_logits, dim=-1)
+        # vocabulary_log_probability = F.log_softmax(vocabulary_logits, dim=-1)
         # it's more numerically stable
         # https://deepdatascience.wordpress.com/2020/02/27/log-softmax-vs-softmax/
 
