@@ -26,7 +26,7 @@ class IMDB_Reviews(pl.LightningDataModule):
         self.validation_data = torch.load(self.validation_path)
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, self.batch_size, shuffle=True)
+        return DataLoader(self.train_data, self.batch_size, num_workers=4, pin_memory=True, shuffle=True)
 
     def val_dataloader(self):
         return DataLoader(self.validation_data, self.batch_size)
@@ -37,12 +37,21 @@ class TransformerLightning(pl.LightningModule):
                  number_of_properties=hp.NUMBER_OF_PROPERTIES, padding_index=hp.PADDING_INDEX,
                  model_dimension=hp.MODEL_DIMENSION, target_sequence_length=hp.TARGET_SEQUENCE_LENGTH,
                  dropout_probability=hp.DROPOUT_PROBABILITY,
-                 feed_forward_transformer_layer_dimension=hp.FEED_FORWARD_TRANSFORMER_LAYER_DIMENSION):
+                 feed_forward_transformer_layer_dimension=hp.FEED_FORWARD_TRANSFORMER_LAYER_DIMENSION,
+                 learning_rate=hp.LEARNING_RATE):
         super().__init__()
         self.transformer = Transformer(vocabulary_size, embedding_size, number_of_properties, padding_index,
                                        model_dimension, target_sequence_length, dropout_probability,
                                        feed_forward_transformer_layer_dimension)
         self.loss_function = nn.CrossEntropyLoss(ignore_index=padding_index)
+        self.learning_rate = learning_rate
+
+        relu_recommended_gain = nn.init.calculate_gain('relu')
+        for parameter in self.transformer.parameters():
+            if parameter.dim() > 1:
+                nn.init.xavier_uniform_(parameter, gain=relu_recommended_gain)
+            else:
+                nn.init.normal_(parameter, std=0.1)
 
         self.train_name = "train"
         self.validation_name = "validation"
@@ -50,14 +59,14 @@ class TransformerLightning(pl.LightningModule):
     def forward(self, batched_source_numericalized, batched_source_properties, batched_source_padding_mask):
         pass
 
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=6 * 10e-5)
-
     def training_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, self.train_name)
 
     def validation_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, self.validation_name)
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
 
     def _step(self, batch, batch_idx, mode):
         bsn, bsp, btin, bspm, btipm, bton = batch

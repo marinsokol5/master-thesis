@@ -16,7 +16,7 @@ SOURCE_MAX_NUMBER_OF_SUBWORDS = SOURCE_MAX_NUMBER_OF_TOKENS - 2 * NUMBER_OF_INPU
 TARGET_MAX_NUMBER_OF_SUBWORDS = TARGET_MAX_NUMBER_OF_TOKENS - 1 # either start or end token, target_input has start while target_output has end
 
 PADDING_INDEX = 3
-
+LEARNING_RATE = 6 * 10e-5
 
 
 

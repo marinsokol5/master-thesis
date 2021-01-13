@@ -24,11 +24,15 @@ class Transformer(nn.Module):
         self.model_dimension = model_dimension
 
         self.embedder = nn.Embedding(vocabulary_size, embedding_size, padding_idx=padding_index)
-        self.embedder_drouput = nn.Dropout(dropout_probability)
-        self.embedding_layer = nn.Sequential(self.embedder, self.embedder_drouput)
+        # self.embedder_drouput = nn.Dropout(dropout_probability)
+        self.embedding_layer = nn.Sequential(self.embedder)
 
         self.combine_embeddings_and_properties_layer = nn.Linear(embedding_size + number_of_properties, model_dimension)
-        self.positional_encoding_layer = PositionalEncoding(model_dimension, dropout_probability=dropout_probability)
+
+        self.positional_encoder = PositionalEncoding(model_dimension)
+        self.positional_encoder_dropout = nn.Dropout(dropout_probability)
+        self.positional_encoding_layer = nn.Sequential(self.positional_encoder, self.positional_encoder_dropout)
+
         self.transformer = nn.Transformer(
             d_model=model_dimension,
             dim_feedforward=feed_forward_transformer_layer_dimension,
